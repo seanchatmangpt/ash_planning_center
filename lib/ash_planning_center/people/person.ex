@@ -5,37 +5,37 @@ defmodule AshPlanningCenter.People.Person do
     domain: AshPlanningCenter.Domain
 
   attributes do
-    attribute :id, :string, primary_key?: true, allow_nil?: false, public?: true
-    attribute :first_name, :string, public?: true
-    attribute :middle_name, :string, public?: true
-    attribute :last_name, :string, public?: true
-    attribute :nickname, :string, public?: true
-    attribute :status, :string, public?: true
-    attribute :avatar, :string, public?: true
-    attribute :child, :boolean, public?: true
-    attribute :gender, :string, public?: true
-    attribute :membership, :string, public?: true
-    attribute :birthdate, :string, public?: true
-    attribute :anniversary, :string, public?: true
-    attribute :created_at, :string, public?: true
-    attribute :updated_at, :string, public?: true
+    attribute(:id, :string, primary_key?: true, allow_nil?: false, public?: true)
+    attribute(:first_name, :string, public?: true)
+    attribute(:middle_name, :string, public?: true)
+    attribute(:last_name, :string, public?: true)
+    attribute(:nickname, :string, public?: true)
+    attribute(:status, :string, public?: true)
+    attribute(:avatar, :string, public?: true)
+    attribute(:child, :boolean, public?: true)
+    attribute(:gender, :string, public?: true)
+    attribute(:membership, :string, public?: true)
+    attribute(:birthdate, :string, public?: true)
+    attribute(:anniversary, :string, public?: true)
+    attribute(:created_at, :string, public?: true)
+    attribute(:updated_at, :string, public?: true)
 
-    attribute :remote_type, :string, public?: true
-    attribute :remote_attributes, :map, public?: true, default: %{}
-    attribute :relationships, :map, public?: true, default: %{}
-    attribute :links, :map, public?: true, default: %{}
-    attribute :meta, :map, public?: true, default: %{}
+    attribute(:remote_type, :string, public?: true)
+    attribute(:remote_attributes, :map, public?: true, default: %{})
+    attribute(:relationships, :map, public?: true, default: %{})
+    attribute(:links, :map, public?: true, default: %{})
+    attribute(:meta, :map, public?: true, default: %{})
   end
 
   actions do
     read :read do
-      primary? true
+      primary?(true)
 
       argument :remote_params, :map do
-        default %{}
+        default(%{})
       end
 
-      prepare fn query, _context ->
+      prepare(fn query, _context ->
         cond do
           query.limit && query.limit > 100 ->
             Ash.Query.add_error(query, "People reads are bounded to at most 100 results")
@@ -46,15 +46,15 @@ defmodule AshPlanningCenter.People.Person do
           true ->
             Ash.Query.limit(query, 25)
         end
-      end
+      end)
 
-      manual AshPlanningCenter.People.Person.Read
+      manual(AshPlanningCenter.People.Person.Read)
     end
 
     read :get do
-      get? true
-      argument :id, :string, allow_nil?: false
-      manual AshPlanningCenter.People.Person.Get
+      get?(true)
+      argument(:id, :string, allow_nil?: false)
+      manual(AshPlanningCenter.People.Person.Get)
     end
   end
 end
@@ -190,7 +190,8 @@ defmodule AshPlanningCenter.People.Person.Get do
 
     case AshPlanningCenter.request(:get, path, context: query.context || %{}) do
       {:ok, response} ->
-        with {:ok, person, _document} <- AshPlanningCenter.JSONAPI.decode_one(response.body, Person) do
+        with {:ok, person, _document} <-
+               AshPlanningCenter.JSONAPI.decode_one(response.body, Person) do
           {:ok, [person]}
         end
 
