@@ -34,6 +34,13 @@ defmodule AshPlanningCenter.ClientTest do
     assert_receive {:planning_center_request, :get, "/people/v2/people", _opts}
   end
 
+  test "public request boundary refuses mutations without invoking transport" do
+    Application.put_env(:ash_planning_center, :client, __MODULE__.FailingClient)
+
+    assert {:error, %Error{reason: {:unsupported_operation, :post}}} =
+             AshPlanningCenter.request(:post, "/people/v2/people", body: %{})
+  end
+
   defp restore_env(key, nil), do: Application.delete_env(:ash_planning_center, key)
   defp restore_env(key, value), do: Application.put_env(:ash_planning_center, key, value)
 
