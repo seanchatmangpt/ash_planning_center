@@ -1,0 +1,13 @@
+PREFIX pco: <https://seanchatmangpt.github.io/ash_planning_center/openapi/ontology#>
+
+SELECT ?resource ?schema_key ?resource_name ?module_name ?file_stem
+WHERE {
+  ?resource a pco:Resource ;
+    pco:schemaKey ?schema_key ;
+    pco:name ?resource_name ;
+    pco:moduleName ?module_name ;
+    pco:fileStem ?file_stem .
+
+  FILTER(?schema_key = "person_attributes")
+}
+ORDER BY ?schema_key
