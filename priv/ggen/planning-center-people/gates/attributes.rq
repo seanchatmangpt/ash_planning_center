@@ -1,0 +1,12 @@
+PREFIX pco: <https://seanchatmangpt.github.io/ash_planning_center/openapi/ontology#>
+
+SELECT ?resource ?name ?json_type ?format ?ash_type
+WHERE {
+  ?attribute a pco:Attribute ;
+    pco:resource ?resource ;
+    pco:name ?name ;
+    pco:jsonType ?json_type ;
+    pco:format ?format ;
+    pco:ashType ?ash_type .
+}
+ORDER BY ?resource ?name

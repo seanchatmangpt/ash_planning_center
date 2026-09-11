@@ -19,6 +19,18 @@ defmodule AshPlanningCenter.People.PersonTest do
     :ok
   end
 
+  test "generated resource carries the admitted OpenAPI Person surface" do
+    names = Person |> Ash.Resource.Info.attributes() |> Enum.map(& &1.name)
+
+    assert length(names) == 47
+    assert :accounting_administrator in names
+    assert :directory_shared_info in names
+    assert :resource_permission_flags in names
+    assert :search_name_or_email_or_phone_number in names
+    assert :stripe_customer_identifier in names
+    assert :remote_relationships in names
+  end
+
   test "lists Planning Center people as Ash resource structs" do
     assert [
              %Person{id: "1", first_name: "Ada", last_name: "Lovelace"},
@@ -41,7 +53,7 @@ defmodule AshPlanningCenter.People.PersonTest do
     [person | _] = Domain.list_people!()
 
     assert person.remote_attributes["upstream_only_field"] == "preserved"
-    assert person.relationships["households"] == %{"data" => []}
+    assert person.remote_relationships["households"] == %{"data" => []}
   end
 
   test "returns nil for a missing get record" do

@@ -27,6 +27,12 @@ jobs:
       - name: Resolve dependencies
         run: mix deps.get
 
+      - name: Project pinned Planning Center OpenAPI with ggen_igniter
+        run: mix ash_planning_center.generate
+
+      - name: Verify generated Ash projection is committed
+        run: git diff --exit-code -- lib/ash_planning_center/generated/people/person.ex
+
       - name: Check formatting
         run: mix format --check-formatted
 
@@ -35,3 +41,11 @@ jobs:
 
       - name: Test
         run: mix test
+
+      - name: Preserve ggen_igniter reconciliation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ggen-igniter-evidence
+          path: .ggen_igniter/
+          if-no-files-found: ignore
