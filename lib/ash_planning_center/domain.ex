@@ -6,8 +6,8 @@ defmodule AshPlanningCenter.Domain do
 
   resources do
     resource AshPlanningCenter.People.Person do
-      define :list_people, action: :read
-      define :get_person, action: :get, args: [:id]
+      define(:list_people, action: :read)
+      define(:get_person, action: :get, args: [:id])
     end
   end
 end
