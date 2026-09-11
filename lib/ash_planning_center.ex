@@ -13,7 +13,9 @@ defmodule AshPlanningCenter do
   @spec request(method(), String.t(), keyword()) ::
           {:ok, AshPlanningCenter.Client.Response.t()}
           | {:error, AshPlanningCenter.Client.Error.t()}
-  def request(:get, path, opts \\ []) do
+  def request(method, path, opts \\ [])
+
+  def request(:get, path, opts) do
     AshPlanningCenter.Client.request(:get, path, opts)
   end
 
