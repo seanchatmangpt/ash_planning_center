@@ -2,10 +2,15 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verify:
@@ -16,13 +21,8 @@ jobs:
 
       - uses: erlef/setup-beam@v1
         with:
-          otp-version: "28.0"
+          otp-version: "28.1"
           elixir-version: "1.19.0"
-
-      - name: Install Hex and Rebar
-        run: |
-          mix local.hex --force
-          mix local.rebar --force
 
       - name: Resolve dependencies
         run: mix deps.get
