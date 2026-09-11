@@ -18,7 +18,10 @@ defmodule AshPlanningCenter.Client do
           {:ok, Response.t()} | {:error, Error.t()}
   def request(method, path, opts \\ []) do
     context = Keyword.get(opts, :context, %{}) || %{}
-    client = context_client(context) || Application.get_env(:ash_planning_center, :client, Req)
+
+    client =
+      context_client(context) ||
+        Application.get_env(:ash_planning_center, :client, AshPlanningCenter.Client.Req)
 
     client.request(method, path, Keyword.delete(opts, :context))
   end
