@@ -57,7 +57,7 @@ defmodule AshPlanningCenter.JSONAPI do
       |> Map.put(:id, Map.get(data, "id"))
       |> Map.put(:remote_type, Map.get(data, "type"))
       |> Map.put(:remote_attributes, remote_attributes)
-      |> Map.put(:relationships, Map.get(data, "relationships", %{}))
+      |> Map.put(:remote_relationships, Map.get(data, "relationships", %{}))
       |> Map.put(:links, Map.get(data, "links", %{}))
       |> Map.put(:meta, Map.get(data, "meta", %{}))
 
