@@ -55,7 +55,8 @@ defmodule AshPlanningCenter.OpenAPI do
   end
 
   def validate!(other) do
-    raise ArgumentError, "Planning Center OpenAPI must decode to an object, got: #{inspect(other)}"
+    raise ArgumentError,
+          "Planning Center OpenAPI must decode to an object, got: #{inspect(other)}"
   end
 
   def to_turtle(document) do
@@ -128,7 +129,8 @@ defmodule AshPlanningCenter.OpenAPI do
 
   defp assert_equal!(actual, expected, label) do
     unless actual == expected do
-      raise ArgumentError, "#{label} mismatch: expected #{inspect(expected)}, got #{inspect(actual)}"
+      raise ArgumentError,
+            "#{label} mismatch: expected #{inspect(expected)}, got #{inspect(actual)}"
     end
   end
 
