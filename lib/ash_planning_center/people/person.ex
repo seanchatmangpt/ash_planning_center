@@ -68,6 +68,7 @@ defmodule AshPlanningCenter.People.Person.Read do
 
   @endpoint "/people/v2/people"
   @remote_page_size 100
+  @max_remote_records 1_000
 
   @impl true
   def read(query, _data_layer_query, _opts, _context) do
@@ -105,9 +106,19 @@ defmodule AshPlanningCenter.People.Person.Read do
     end
   end
 
+  defp scan(_query, _params, remote_offset, _wanted_offset, _limit, _acc, _context)
+       when remote_offset >= @max_remote_records do
+    scan_limit_error()
+  end
+
   defp scan(query, params, remote_offset, wanted_offset, limit, acc, context) do
     wanted = wanted_offset + limit
-    per_page = min(@remote_page_size, max(wanted - length(acc), 1))
+    remaining_budget = @max_remote_records - remote_offset
+
+    per_page =
+      @remote_page_size
+      |> min(max(wanted - length(acc), 1))
+      |> min(remaining_budget)
 
     request_params =
       params
@@ -123,6 +134,8 @@ defmodule AshPlanningCenter.People.Person.Read do
          {:ok, matching} <- Ash.Query.apply_to(query, records) do
       next_acc = acc ++ matching
       remote_count = length(records)
+      next_remote_offset = remote_offset + remote_count
+      has_more? = more?(document, remote_count, per_page, remote_offset)
 
       cond do
         length(next_acc) >= wanted ->
@@ -131,11 +144,14 @@ defmodule AshPlanningCenter.People.Person.Read do
         remote_count == 0 ->
           {:ok, take_window(next_acc, wanted_offset, limit)}
 
-        more?(document, remote_count, per_page, remote_offset) ->
+        has_more? && next_remote_offset >= @max_remote_records ->
+          scan_limit_error()
+
+        has_more? ->
           scan(
             query,
             params,
-            remote_offset + remote_count,
+            next_remote_offset,
             wanted_offset,
             limit,
             next_acc,
@@ -157,6 +173,15 @@ defmodule AshPlanningCenter.People.Person.Read do
       is_integer(total_count) -> remote_offset + remote_count < total_count
       true -> remote_count == per_page
     end
+  end
+
+  defp scan_limit_error do
+    {:error,
+     %Error{
+       message:
+         "Planning Center People read exceeded the 1000-record local scan boundary; use remote_params to narrow the server-side result set",
+       reason: {:scan_limit_exceeded, @max_remote_records}
+     }}
   end
 
   defp take_window(records, offset, limit) do
