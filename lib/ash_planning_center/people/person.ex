@@ -2,7 +2,8 @@ defmodule AshPlanningCenter.People.Person do
   @moduledoc "Planning Center People person projected as an Ash resource."
 
   use Ash.Resource,
-    domain: AshPlanningCenter.Domain
+    domain: AshPlanningCenter.Domain,
+    primary_read_warning?: false
 
   attributes do
     attribute(:id, :string, primary_key?: true, allow_nil?: false, public?: true)
@@ -22,7 +23,7 @@ defmodule AshPlanningCenter.People.Person do
 
     attribute(:remote_type, :string, public?: true)
     attribute(:remote_attributes, :map, public?: true, default: %{})
-    attribute(:relationships, :map, public?: true, default: %{})
+    attribute(:remote_relationships, :map, public?: true, default: %{})
     attribute(:links, :map, public?: true, default: %{})
     attribute(:meta, :map, public?: true, default: %{})
   end
