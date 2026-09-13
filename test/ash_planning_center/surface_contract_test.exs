@@ -15,11 +15,11 @@ defmodule AshPlanningCenter.SurfaceContractTest do
   end
 
   test "Planning Center link probes compile to accessibility semantics, not selectors" do
-    probe =
-      Contract.probe(:link, "marketplace-registration", "Register",
-        denotes: "planning-center:event:marketplace",
-        capability_id: "PlanningCenter.Event.observe_registration"
-      )
+    assert {:ok, probe} =
+             Contract.probe(:link, "marketplace-registration", "Register",
+               denotes: "planning-center:event:marketplace",
+               capability_id: "PlanningCenter.Event.observe_registration"
+             )
 
     assert probe["role"] == "link"
     assert probe["name"] == "Register"
@@ -32,9 +32,8 @@ defmodule AshPlanningCenter.SurfaceContractTest do
     refute Map.has_key?(probe, "xpath")
   end
 
-  test "unknown probe kinds are refused instead of guessed" do
-    assert_raise KeyError, fn ->
-      Contract.probe(:css_selector, "brittle", "#app > div:nth-child(7)")
-    end
+  test "unknown probe kinds return a typed refusal instead of guessing" do
+    assert {:error, %{code: :unsupported_probe_kind, detail: "css_selector"}} =
+             Contract.probe(:css_selector, "brittle", "#app > div:nth-child(7)")
   end
 end
