@@ -1,7 +1,7 @@
 defmodule AshPlanningCenter.MixProject do
   use Mix.Project
 
-  @version "26.9.10"
+  @version "26.9.13"
   @source_url "https://github.com/seanchatmangpt/ash_planning_center"
 
   def project do
@@ -24,7 +24,12 @@ defmodule AshPlanningCenter.MixProject do
   end
 
   defp aliases do
-    [generate: ["ash_planning_center.generate"]]
+    [
+      generate: [
+        "ash_planning_center.generate",
+        "ash_planning_center.generate_surface"
+      ]
+    ]
   end
 
   defp deps do
@@ -44,7 +49,7 @@ defmodule AshPlanningCenter.MixProject do
     [
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
-      files: ~w(lib mix.exs README.md LICENSE)
+      files: ~w(lib priv mix.exs README.md LICENSE)
     ]
   end
 end

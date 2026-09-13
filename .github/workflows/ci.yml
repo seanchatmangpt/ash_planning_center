@@ -30,8 +30,21 @@ jobs:
       - name: Project pinned Planning Center OpenAPI with ggen_igniter
         run: mix ash_planning_center.generate
 
-      - name: Verify generated Ash projection is committed
-        run: git diff --exit-code -- lib/ash_planning_center/generated/people/person.ex
+      - name: Manufacture Planning Center accessibility surface from ontology
+        run: mix ash_planning_center.generate_surface
+
+      - name: Preserve generated surface candidate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: planning-center-surface-candidate
+          path: lib/ash_planning_center/generated/surface/contract.ex
+          if-no-files-found: ignore
+
+      - name: Verify generated Ash projections are committed
+        run: |
+          git diff --exit-code -- lib/ash_planning_center/generated/people/person.ex
+          git diff --exit-code -- lib/ash_planning_center/generated/surface/contract.ex
 
       - name: Check formatting
         run: mix format --check-formatted

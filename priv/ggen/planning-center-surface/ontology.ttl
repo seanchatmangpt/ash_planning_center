@@ -1,0 +1,87 @@
+@prefix pcui: <https://seanchatmangpt.github.io/ash_planning_center/ui/ontology#> .
+@prefix surf: <https://github.com/seanchatmangpt/ash_surface#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+pcui:SurfaceContract a rdfs:Class .
+pcui:Surface a rdfs:Class .
+pcui:ProbeKind a rdfs:Class .
+
+pcui:Contract a pcui:SurfaceContract ;
+    pcui:moduleName "AshPlanningCenter.Generated.Surface.Contract" ;
+    pcui:fileStem "contract" ;
+    pcui:specVersion "26.9.13" ;
+    pcui:surfaceRuntime "ash_surface" ;
+    pcui:observer "playwright_accessibility" ;
+    pcui:plannerBoundary "ash_a2a" ;
+    pcui:planningFormalism "hddl_fond" ;
+    pcui:authorityBoundary "OBSERVE" ;
+    pcui:accessibilityVocabulary <https://www.w3.org/TR/wai-aria/> ;
+    pcui:testRuleFormat <https://www.w3.org/TR/act-rules-format/> ;
+    pcui:resultVocabulary <https://www.w3.org/TR/EARL10-Schema/> .
+
+pcui:PlanningCenterAdmin a pcui:Surface ;
+    pcui:surfaceId "planning_center_admin" ;
+    pcui:denotes "Planning Center authenticated administration UI" .
+
+pcui:ChurchCenterPublic a pcui:Surface ;
+    pcui:surfaceId "church_center_public" ;
+    pcui:denotes "Church Center public participant UI" .
+
+# Probe kinds are accessibility-semantic contracts. Accessible names and domain
+# denotations are instance data supplied by the Planning Center specialization;
+# no CSS selector, XPath, or current vendor DOM shape is canonicalized here.
+pcui:LinkProbe a pcui:ProbeKind ;
+    pcui:kind "link" ;
+    pcui:ariaRole "link" ;
+    pcui:roleSpec <https://www.w3.org/TR/wai-aria/#link> ;
+    pcui:semanticPurpose "semantic_navigation" .
+
+pcui:ButtonProbe a pcui:ProbeKind ;
+    pcui:kind "button" ;
+    pcui:ariaRole "button" ;
+    pcui:roleSpec <https://www.w3.org/TR/wai-aria/#button> ;
+    pcui:semanticPurpose "semantic_command_affordance" .
+
+pcui:SearchProbe a pcui:ProbeKind ;
+    pcui:kind "search" ;
+    pcui:ariaRole "searchbox" ;
+    pcui:roleSpec <https://www.w3.org/TR/wai-aria/#searchbox> ;
+    pcui:semanticPurpose "semantic_search_input" .
+
+pcui:TextInputProbe a pcui:ProbeKind ;
+    pcui:kind "text_input" ;
+    pcui:ariaRole "textbox" ;
+    pcui:roleSpec <https://www.w3.org/TR/wai-aria/#textbox> ;
+    pcui:semanticPurpose "semantic_text_input" .
+
+pcui:FormProbe a pcui:ProbeKind ;
+    pcui:kind "form" ;
+    pcui:ariaRole "form" ;
+    pcui:roleSpec <https://www.w3.org/TR/wai-aria/#form> ;
+    pcui:semanticPurpose "semantic_form_boundary" .
+
+pcui:HeadingProbe a pcui:ProbeKind ;
+    pcui:kind "heading" ;
+    pcui:ariaRole "heading" ;
+    pcui:roleSpec <https://www.w3.org/TR/wai-aria/#heading> ;
+    pcui:semanticPurpose "semantic_surface_identity" .
+
+pcui:moduleName a rdf:Property ; rdfs:range xsd:string .
+pcui:fileStem a rdf:Property ; rdfs:range xsd:string .
+pcui:specVersion a rdf:Property ; rdfs:range xsd:string .
+pcui:surfaceRuntime a rdf:Property ; rdfs:range xsd:string .
+pcui:observer a rdf:Property ; rdfs:range xsd:string .
+pcui:plannerBoundary a rdf:Property ; rdfs:range xsd:string .
+pcui:planningFormalism a rdf:Property ; rdfs:range xsd:string .
+pcui:authorityBoundary a rdf:Property ; rdfs:range xsd:string .
+pcui:accessibilityVocabulary a rdf:Property .
+pcui:testRuleFormat a rdf:Property .
+pcui:resultVocabulary a rdf:Property .
+pcui:surfaceId a rdf:Property ; rdfs:range xsd:string .
+pcui:denotes a rdf:Property ; rdfs:range xsd:string .
+pcui:kind a rdf:Property ; rdfs:range xsd:string .
+pcui:ariaRole a rdf:Property ; rdfs:range xsd:string .
+pcui:roleSpec a rdf:Property .
+pcui:semanticPurpose a rdf:Property ; rdfs:range xsd:string .
