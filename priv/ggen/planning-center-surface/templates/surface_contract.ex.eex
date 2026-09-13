@@ -40,27 +40,34 @@ defmodule <%= module_name %> do
     }
   end
 
-  @spec probe(String.t() | atom(), String.t(), String.t(), keyword()) :: map()
+  @spec probe(String.t() | atom(), String.t(), String.t(), keyword()) ::
+          {:ok, map()} | {:error, %{code: :unsupported_probe_kind, detail: String.t()}}
   def probe(kind, id, accessible_name, opts \\ [])
       when is_binary(id) and is_binary(accessible_name) do
     kind = to_string(kind)
-    spec = Map.fetch!(@probe_kinds, kind)
 
-    %{
-      "id" => id,
-      "role" => spec.role,
-      "name" => accessible_name,
-      "exact" => Keyword.get(opts, :exact, true),
-      "roleSpec" => spec.role_spec,
-      "semanticPurpose" => spec.purpose,
-      "denotes" => Keyword.get(opts, :denotes),
-      "capabilityId" => Keyword.get(opts, :capability_id),
-      "authorityBoundary" => @authority_boundary,
-      "surfaceRuntime" => @surface_runtime,
-      "observer" => @observer,
-      "plannerBoundary" => @planner_boundary,
-      "planningFormalism" => @planning_formalism
-    }
+    case Map.fetch(@probe_kinds, kind) do
+      {:ok, spec} ->
+        {:ok,
+         %{
+           "id" => id,
+           "role" => spec.role,
+           "name" => accessible_name,
+           "exact" => Keyword.get(opts, :exact, true),
+           "roleSpec" => spec.role_spec,
+           "semanticPurpose" => spec.purpose,
+           "denotes" => Keyword.get(opts, :denotes),
+           "capabilityId" => Keyword.get(opts, :capability_id),
+           "authorityBoundary" => @authority_boundary,
+           "surfaceRuntime" => @surface_runtime,
+           "observer" => @observer,
+           "plannerBoundary" => @planner_boundary,
+           "planningFormalism" => @planning_formalism
+         }}
+
+      :error ->
+        {:error, %{code: :unsupported_probe_kind, detail: kind}}
+    end
   end
 
   @spec probe_kinds() :: map()
