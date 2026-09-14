@@ -3,15 +3,36 @@ defmodule AshPlanningCenter.SurfaceContractTest do
 
   alias AshPlanningCenter.Generated.Surface.Contract
 
-  test "ontology-manufactured contract preserves surface/planner authority ceilings" do
-    assert Contract.metadata() == %{
+  test "ontology-manufactured contract preserves complementary ownership and OBSERVE ceiling" do
+    assert %{
              "specVersion" => "26.9.13",
              "surfaceRuntime" => "ash_surface",
              "observer" => "playwright_accessibility",
              "plannerBoundary" => "ash_a2a",
              "planningFormalism" => "hddl_fond",
-             "authorityBoundary" => "OBSERVE"
+             "authorityBoundary" => "OBSERVE",
+             "frameworks" => frameworks,
+             "exclusions" => exclusions
+           } = Contract.metadata()
+
+    assert frameworks == %{
+             "ash" => %{"role" => "domain_action_truth", "authorityBoundary" => "OBSERVE"},
+             "ash_a2a" => %{
+               "role" => "machine_capability_projection",
+               "authorityBoundary" => "OBSERVE"
+             },
+             "ash_pplan" => %{
+               "role" => "fond_hddl_admission",
+               "authorityBoundary" => "OBSERVE"
+             },
+             "ash_surface" => %{
+               "role" => "accessibility_observation_runtime",
+               "authorityBoundary" => "OBSERVE"
+             }
            }
+
+    assert Map.keys(exclusions) |> Enum.sort() ==
+             ~w(ash_ai ash_oban ash_r2rml ash_state_machine reactor)
   end
 
   test "Planning Center link probes compile to accessibility semantics, not selectors" do
@@ -32,8 +53,12 @@ defmodule AshPlanningCenter.SurfaceContractTest do
     refute Map.has_key?(probe, "xpath")
   end
 
-  test "unknown probe kinds return a typed refusal instead of guessing" do
-    assert {:error, %{code: :unsupported_probe_kind, detail: "css_selector"}} =
-             Contract.probe(:css_selector, "brittle", "#app > div:nth-child(7)")
+  test "selector and XPath probe kinds are typed refusals instead of guessed locators" do
+    for kind <- [:css_selector, :xpath] do
+      assert {:error, %{code: :unsupported_probe_kind, detail: detail}} =
+               Contract.probe(kind, "brittle", "non-semantic locator")
+
+      assert detail == Atom.to_string(kind)
+    end
   end
 end
