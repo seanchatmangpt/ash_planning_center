@@ -2,6 +2,7 @@ defmodule AshPlanningCenter.Domain do
   @moduledoc "Primary Ash domain for Planning Center resources."
 
   use Ash.Domain,
+    extensions: [AshA2A],
     validate_config_inclusion?: false
 
   resources do
