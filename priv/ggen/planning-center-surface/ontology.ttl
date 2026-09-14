@@ -7,6 +7,8 @@
 pcui:SurfaceContract a rdfs:Class .
 pcui:Surface a rdfs:Class .
 pcui:ProbeKind a rdfs:Class .
+pcui:FrameworkBinding a rdfs:Class .
+pcui:FrameworkExclusion a rdfs:Class .
 
 pcui:Contract a pcui:SurfaceContract ;
     pcui:moduleName "AshPlanningCenter.Generated.Surface.Contract" ;
@@ -20,6 +22,46 @@ pcui:Contract a pcui:SurfaceContract ;
     pcui:accessibilityVocabulary <https://www.w3.org/TR/wai-aria/> ;
     pcui:testRuleFormat <https://www.w3.org/TR/act-rules-format/> ;
     pcui:resultVocabulary <https://www.w3.org/TR/EARL10-Schema/> .
+
+pcui:AshCoreBinding a pcui:FrameworkBinding ;
+    pcui:framework "ash" ;
+    pcui:role "domain_action_truth" ;
+    pcui:authorityBoundary "OBSERVE" .
+
+pcui:AshSurfaceBinding a pcui:FrameworkBinding ;
+    pcui:framework "ash_surface" ;
+    pcui:role "accessibility_observation_runtime" ;
+    pcui:authorityBoundary "OBSERVE" .
+
+pcui:AshA2ABinding a pcui:FrameworkBinding ;
+    pcui:framework "ash_a2a" ;
+    pcui:role "machine_capability_projection" ;
+    pcui:authorityBoundary "OBSERVE" .
+
+pcui:AshPPlanBinding a pcui:FrameworkBinding ;
+    pcui:framework "ash_pplan" ;
+    pcui:role "fond_hddl_admission" ;
+    pcui:authorityBoundary "OBSERVE" .
+
+pcui:AshStateMachineExclusion a pcui:FrameworkExclusion ;
+    pcui:framework "ash_state_machine" ;
+    pcui:reason "no_persistent_local_resource_lifecycle" .
+
+pcui:AshObanExclusion a pcui:FrameworkExclusion ;
+    pcui:framework "ash_oban" ;
+    pcui:reason "no_background_or_temporal_activation_at_observe_boundary" .
+
+pcui:ReactorExclusion a pcui:FrameworkExclusion ;
+    pcui:framework "reactor" ;
+    pcui:reason "no_multi_step_execution_graph_at_observe_boundary" .
+
+pcui:AshR2RMLExclusion a pcui:FrameworkExclusion ;
+    pcui:framework "ash_r2rml" ;
+    pcui:reason "no_relational_subject_for_r2rml_projection" .
+
+pcui:AshAIExclusion a pcui:FrameworkExclusion ;
+    pcui:framework "ash_ai" ;
+    pcui:reason "known_deterministic_observation_path_requires_no_llm" .
 
 pcui:PlanningCenterAdmin a pcui:Surface ;
     pcui:surfaceId "planning_center_admin" ;
@@ -85,3 +127,6 @@ pcui:kind a rdf:Property ; rdfs:range xsd:string .
 pcui:ariaRole a rdf:Property ; rdfs:range xsd:string .
 pcui:roleSpec a rdf:Property .
 pcui:semanticPurpose a rdf:Property ; rdfs:range xsd:string .
+pcui:framework a rdf:Property ; rdfs:range xsd:string .
+pcui:role a rdf:Property ; rdfs:range xsd:string .
+pcui:reason a rdf:Property ; rdfs:range xsd:string .
