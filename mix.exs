@@ -3,6 +3,10 @@ defmodule AshPlanningCenter.MixProject do
 
   @version "26.9.13"
   @source_url "https://github.com/seanchatmangpt/ash_planning_center"
+  @ash_surface_ref "7d5492795d9b9a0956f51545ed1ad1932768b77e"
+  @ash_a2a_ref "faa86055591cdf2bda867a4c033b8b6f18b79780"
+  @ash_pplan_ref "d35f6298e8bd4683c36018180afac1b17dfeaa97"
+  @ggen_igniter_ref "6b9baecf6d40d4357702526524e8a4a13c1c1c8d"
 
   def project do
     [
@@ -35,13 +39,15 @@ defmodule AshPlanningCenter.MixProject do
   defp deps do
     [
       {:ash, "~> 3.33"},
+      {:ash_surface, github: "seanchatmangpt/ash_surface", ref: @ash_surface_ref},
+      {:ash_a2a, github: "seanchatmangpt/ash_a2a", ref: @ash_a2a_ref},
+      {:ash_pplan, github: "seanchatmangpt/ash_pplan", ref: @ash_pplan_ref},
       {:req, "~> 0.7.4"},
       {:jason, "~> 1.4"},
       {:ggen_igniter,
        github: "seanchatmangpt/ggen_igniter",
-       ref: "dc08680b807d5e1742b3d584aa67c5e39de4844a",
-       only: [:dev, :test],
-       runtime: false}
+       ref: @ggen_igniter_ref,
+       override: true}
     ]
   end
 
