@@ -1,0 +1,11 @@
+PREFIX pcui: <https://seanchatmangpt.github.io/ash_planning_center/ui/ontology#>
+
+SELECT ?probe_kind ?kind ?aria_role ?role_spec ?semantic_purpose
+WHERE {
+  ?probe_kind a pcui:ProbeKind ;
+    pcui:kind ?kind ;
+    pcui:ariaRole ?aria_role ;
+    pcui:roleSpec ?role_spec ;
+    pcui:semanticPurpose ?semantic_purpose .
+}
+ORDER BY ?kind
