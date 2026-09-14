@@ -50,6 +50,13 @@ jobs:
           git ls-files --error-unmatch lib/ash_planning_center/generated/surface/contract.ex
           git diff --exit-code -- lib/ash_planning_center/generated/surface/contract.ex
 
+      - name: Verify deterministic surface regeneration
+        run: |
+          sha256sum lib/ash_planning_center/generated/surface/contract.ex > /tmp/surface-contract.sha256
+          mix ash_planning_center.generate_surface
+          sha256sum -c /tmp/surface-contract.sha256
+          git diff --exit-code -- lib/ash_planning_center/generated/surface/contract.ex
+
       - name: Project pinned Planning Center OpenAPI with ggen_igniter
         run: mix ash_planning_center.generate
 
@@ -66,6 +73,9 @@ jobs:
 
       - name: Test
         run: mix test
+
+      - name: Construct package
+        run: mix hex.build
 
       - name: Preserve ggen_igniter reconciliation evidence
         if: always()
