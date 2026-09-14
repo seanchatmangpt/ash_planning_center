@@ -12,6 +12,24 @@ defmodule AshPlanningCenter.Generated.Surface.Contract do
   @planning_formalism "hddl_fond"
   @authority_boundary "OBSERVE"
 
+  @frameworks %{
+    "ash" => %{"role" => "domain_action_truth", "authorityBoundary" => "OBSERVE"},
+    "ash_a2a" => %{"role" => "machine_capability_projection", "authorityBoundary" => "OBSERVE"},
+    "ash_pplan" => %{"role" => "fond_hddl_admission", "authorityBoundary" => "OBSERVE"},
+    "ash_surface" => %{
+      "role" => "accessibility_observation_runtime",
+      "authorityBoundary" => "OBSERVE"
+    }
+  }
+
+  @exclusions %{
+    "ash_ai" => "known_deterministic_observation_path_requires_no_llm",
+    "ash_oban" => "no_background_or_temporal_activation_at_observe_boundary",
+    "ash_r2rml" => "no_relational_subject_for_r2rml_projection",
+    "ash_state_machine" => "no_persistent_local_resource_lifecycle",
+    "reactor" => "no_multi_step_execution_graph_at_observe_boundary"
+  }
+
   @probe_kinds %{
     "button" => %{
       role: "button",
@@ -53,33 +71,48 @@ defmodule AshPlanningCenter.Generated.Surface.Contract do
       "observer" => @observer,
       "plannerBoundary" => @planner_boundary,
       "planningFormalism" => @planning_formalism,
-      "authorityBoundary" => @authority_boundary
+      "authorityBoundary" => @authority_boundary,
+      "frameworks" => @frameworks,
+      "exclusions" => @exclusions
     }
   end
 
-  @spec probe(String.t() | atom(), String.t(), String.t(), keyword()) :: map()
+  @spec probe(String.t() | atom(), String.t(), String.t(), keyword()) ::
+          {:ok, map()} | {:error, %{code: :unsupported_probe_kind, detail: String.t()}}
   def probe(kind, id, accessible_name, opts \\ [])
       when is_binary(id) and is_binary(accessible_name) do
     kind = to_string(kind)
-    spec = Map.fetch!(@probe_kinds, kind)
 
-    %{
-      "id" => id,
-      "role" => spec.role,
-      "name" => accessible_name,
-      "exact" => Keyword.get(opts, :exact, true),
-      "roleSpec" => spec.role_spec,
-      "semanticPurpose" => spec.purpose,
-      "denotes" => Keyword.get(opts, :denotes),
-      "capabilityId" => Keyword.get(opts, :capability_id),
-      "authorityBoundary" => @authority_boundary,
-      "surfaceRuntime" => @surface_runtime,
-      "observer" => @observer,
-      "plannerBoundary" => @planner_boundary,
-      "planningFormalism" => @planning_formalism
-    }
+    case Map.fetch(@probe_kinds, kind) do
+      {:ok, spec} ->
+        {:ok,
+         %{
+           "id" => id,
+           "role" => spec.role,
+           "name" => accessible_name,
+           "exact" => Keyword.get(opts, :exact, true),
+           "roleSpec" => spec.role_spec,
+           "semanticPurpose" => spec.purpose,
+           "denotes" => Keyword.get(opts, :denotes),
+           "capabilityId" => Keyword.get(opts, :capability_id),
+           "authorityBoundary" => @authority_boundary,
+           "surfaceRuntime" => @surface_runtime,
+           "observer" => @observer,
+           "plannerBoundary" => @planner_boundary,
+           "planningFormalism" => @planning_formalism
+         }}
+
+      :error ->
+        {:error, %{code: :unsupported_probe_kind, detail: kind}}
+    end
   end
 
   @spec probe_kinds() :: map()
   def probe_kinds, do: @probe_kinds
+
+  @spec frameworks() :: map()
+  def frameworks, do: @frameworks
+
+  @spec exclusions() :: map()
+  def exclusions, do: @exclusions
 end
