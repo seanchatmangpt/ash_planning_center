@@ -65,7 +65,8 @@ defmodule AshPlanningCenter.EventSnapshot do
          {:ok, registrations} <-
            normalize_records(value(attrs, :registrations, []), :registrations),
          {:ok, check_ins} <- normalize_records(value(attrs, :check_ins, []), :check_ins),
-         {:ok, source_refs} <- normalize_string_list(value(attrs, :source_refs, []), :source_refs) do
+         {:ok, source_refs} <-
+           normalize_string_list(value(attrs, :source_refs, []), :source_refs) do
       {:ok,
        %__MODULE__{
          event_ref: event_ref,
@@ -135,17 +136,17 @@ defmodule AshPlanningCenter.EventSnapshot do
       end)
 
     unknown = Map.keys(normalized) -- allowed
+    missing = Enum.reject(required, &non_blank?(Map.get(normalized, &1)))
 
     cond do
       unknown != [] ->
         {:error, {:unsupported_participant_fields, kind, index, Enum.sort(unknown)}}
 
-      missing = Enum.reject(required, &non_blank?(Map.get(normalized, &1))) ->
-        if missing == [] do
-          {:ok, normalized}
-        else
-          {:error, {:missing_participant_fields, kind, index, missing}}
-        end
+      missing != [] ->
+        {:error, {:missing_participant_fields, kind, index, missing}}
+
+      true ->
+        {:ok, normalized}
     end
   end
 
