@@ -10,14 +10,30 @@ defmodule AshPlanningCenter.EventSnapshotTest do
                event_name: "Youth Night",
                starts_at: "2026-09-22T19:00:00-07:00",
                roster: [
-                 %{slot_ref: "slot:registration", person_ref: "person:tanner", role: "registration"}
+                 %{
+                   slot_ref: "slot:registration",
+                   person_ref: "person:tanner",
+                   role: "registration"
+                 }
                ],
                registrations: [
-                 %{registration_ref: "reg:1", person_ref: "person:student-opaque", status: "registered"}
+                 %{
+                   registration_ref: "reg:1",
+                   person_ref: "person:student-opaque",
+                   status: "registered"
+                 }
                ],
                check_ins: [
-                 %{check_in_ref: "check:1", person_ref: "person:student-opaque", status: "present"},
-                 %{check_in_ref: "check:2", person_ref: "person:student-opaque", status: "present"}
+                 %{
+                   check_in_ref: "check:1",
+                   person_ref: "person:student-opaque",
+                   status: "present"
+                 },
+                 %{
+                   check_in_ref: "check:2",
+                   person_ref: "person:student-opaque",
+                   status: "present"
+                 }
                ],
                source_refs: ["pco:event:youth-001"]
              })
