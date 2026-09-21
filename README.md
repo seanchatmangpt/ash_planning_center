@@ -117,3 +117,21 @@ Expand in this order:
 
 This keeps reversible read possibilities broad while preventing an observed
 remote object from silently acquiring write authority.
+
+
+## ZOE event observation seam
+
+`AshPlanningCenter.EventSnapshot` is the DfCM boundary for event-operation
+simulation. It normalizes already-observed Planning Center data into
+`zoe-event-ops/v1` without adding provider calls or write authority.
+
+The contract is intentionally `OBSERVE`-only, carries `do_authority: false`,
+and uses only opaque participant references. Registration and check-in records
+refuse unadmitted fields such as names, email addresses, phone numbers, or
+other youth PII. XaaS may consume the normalized snapshot for simulation, but a
+simulation result is not evidence that Planning Center was read live and is not
+a Planning Center write receipt.
+
+This preserves the existing extension law: live Services/Check-Ins/Registrations
+endpoints remain `UNSUPPORTED` until their real provider semantics are added
+and verified independently.
