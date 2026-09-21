@@ -1,0 +1,54 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix sjira: <urn:seanchatmangpt:sjira:v1#> .
+@prefix work: <urn:seanchatmangpt:ash_planning_center:sjira:v26.9.21:> .
+
+work:package
+  a sjira:WorkPackage ;
+  dcterms:title "ash_planning_center ZOE event observation remaining WIP" ;
+  sjira:project "ash_planning_center" ;
+  sjira:repository "seanchatmangpt/ash_planning_center" ;
+  sjira:trackingBaseSha "5ee26cbdc8fef26c92c7691355c76f5aed2e7b2c" ;
+  sjira:reviewedSubjectSha "d3330797bf04287af07bea0029d831d8bcadbefe" ;
+  sjira:reviewedPullRequest "4" ;
+  sjira:evidenceCeiling "CONTRACT_ONLY" ;
+  sjira:authorityCeiling "OBSERVE" ;
+  sjira:standing "PARTIAL_ALIVE" ;
+  sjira:contains work:APC-SJIRA-2621-001,
+                 work:APC-SJIRA-2621-002 .
+
+work:APC-SJIRA-2621-001
+  a sjira:WorkOrder ;
+  dcterms:title "Close exact-head formatting failure in event snapshot test" ;
+  sjira:status "BUILD_BROKEN" ;
+  sjira:subject "test/ash_planning_center/event_snapshot_test.exs@d3330797bf04287af07bea0029d831d8bcadbefe" ;
+  sjira:observedEvidence "GitHub Actions run 35559001686 failed mix format --check-formatted on event_snapshot_test.exs; compile and tests were skipped." ;
+  sjira:desiredConsequence "The repository-native format gate passes without semantic changes to the strict participant-reference contract." ;
+  sjira:acceptancePredicate "mix format --check-formatted exits zero." ;
+  sjira:falsifier "Formatting repair changes the allowed participant fields or broadens authority beyond OBSERVE." ;
+  sjira:authority "OBSERVE_ONLY" ;
+  sjira:productionActuation false .
+
+work:APC-SJIRA-2621-002
+  a sjira:WorkOrder ;
+  dcterms:title "Execute focused exact-head contract court after formatting repair" ;
+  sjira:status "BLOCKED" ;
+  sjira:dependsOn work:APC-SJIRA-2621-001 ;
+  sjira:subjectSha "d3330797bf04287af07bea0029d831d8bcadbefe" ;
+  sjira:desiredConsequence "The strict opaque-reference observation seam is executed and receipted without performing a live Planning Center call." ;
+  sjira:acceptancePredicate "Participant PII/unknown fields are refused." ;
+  sjira:acceptancePredicate "Missing required person_ref values are refused." ;
+  sjira:acceptancePredicate "Successful contract output remains provider=planning_center, authority_boundary=OBSERVE, do_authority=false, standing=UNKNOWN, evidence_ceiling=CONTRACT_ONLY." ;
+  sjira:verificationCourt "mix test test/ash_planning_center/event_snapshot_test.exs" ;
+  sjira:falsifier "The court requires network access or a live Planning Center credential." ;
+  sjira:livePlanningCenterRead false ;
+  sjira:productionActuation false .
+
+work:live-provider-exclusion
+  a sjira:Exclusion ;
+  sjira:excludes "live Planning Center Services reads" ;
+  sjira:excludes "live Planning Center Check-Ins reads" ;
+  sjira:excludes "live Planning Center Registrations reads" ;
+  sjira:excludes "Planning Center writes" ;
+  sjira:status "UNSUPPORTED" ;
+  sjira:reason "Provider semantics are not admitted by PR4 and are outside CONTRACT_ONLY evidence" .
