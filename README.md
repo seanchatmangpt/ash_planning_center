@@ -41,6 +41,7 @@ making that abstraction a prerequisite for the first working integration.
 | Ash filtering over bounded People reads | implemented by bounded remote scanning |
 | Ash sorting | `UNSUPPORTED` until a semantics-preserving translation exists |
 | Planning Center writes | `UNSUPPORTED` in this release |
+| Services/Registrations/Check-Ins ZOE event composite | bounded GET reader implemented; live account receipt still required |
 | Other Planning Center products | extension points only |
 
 `UNKNOWN` live-account behavior is not promoted to `ALIVE` by mocked transport
@@ -135,3 +136,45 @@ a Planning Center write receipt.
 This preserves the existing extension law: live Services/Check-Ins/Registrations
 endpoints remain `UNSUPPORTED` until their real provider semantics are added
 and verified independently.
+
+
+## ZOE live observation reader
+
+`AshPlanningCenter.EventReader` closes the code-path gap between the existing
+`zoe-event-ops/v1` normalization contract and Planning Center's read APIs.
+
+It accepts explicit provider identities for any combination of:
+
+- Services plan team members:
+  `/services/v2/service_types/{service_type_id}/plans/{plan_id}/team_members`
+- Registrations signup attendees:
+  `/registrations/v2/signups/{signup_id}/attendees`
+- Check-Ins event check-ins:
+  `/check-ins/v2/events/{event_id}/check_ins`
+
+The reader hardcodes GET, validates provider IDs before transport, caps pagination,
+drops provider PII, and emits only opaque participant references and operational
+status through `AshPlanningCenter.EventSnapshot`.
+
+A successful read returns an OBSERVE-only receipt with `do_authority: false`.
+Repository tests use an injected client and therefore prove `PARTIAL_ALIVE`
+transport semantics, not a live ZOE Planning Center observation.
+
+For an operator-controlled live probe, configure the existing Planning Center
+authentication and run:
+
+```bash
+mix ash_planning_center.zoe_probe \
+  --event-ref event:youth-night \
+  --event-name "Youth Night" \
+  --starts-at 2026-09-23T19:00:00-07:00 \
+  --service-type-id SERVICE_TYPE_ID \
+  --plan-id PLAN_ID \
+  --signup-id SIGNUP_ID \
+  --check-in-event-id CHECK_IN_EVENT_ID \
+  --out /tmp/zoe-event-observation.json
+```
+
+The task has no write option and does not accept or print credentials. A real
+provider response from that exact probe is the missing evidence needed to move
+the corresponding live observation subject beyond UNKNOWN/PARTIAL_ALIVE.
