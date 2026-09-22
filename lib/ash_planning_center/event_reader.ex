@@ -2,6 +2,11 @@ defmodule AshPlanningCenter.EventReader do
   @moduledoc """
   Bounded, read-only Planning Center observation composition for ZOE event operations.
 
+  The repository generator is intentionally pinned to the People OpenAPI only.
+  Services, Registrations, and Check-Ins are therefore explicit handwritten
+  residue with generator capability marked UNSUPPORTED until those product
+  schemas are admitted into the ontology/ggen path.
+
   The reader may call only the admitted GET collections needed to construct an
   AshPlanningCenter.EventSnapshot. It discards provider PII and projects opaque
   identities/status only. It never exposes a write method, routes an incident,
@@ -54,6 +59,9 @@ defmodule AshPlanningCenter.EventReader do
            do_authority: false,
            standing: "PARTIAL_ALIVE",
            transport_identity: transport_identity(client),
+           implementation_origin: "HANDWRITTEN_IRREDUCIBLE_COMPOSITION",
+           generator_capability: "UNSUPPORTED_NON_PEOPLE_PRODUCTS",
+           generator_scope_ref: "Mix.Tasks.AshPlanningCenter.Generate:People-only",
            source_refs: Enum.map(source_receipts, & &1.source_ref),
            pages: length(source_receipts),
            records: %{
