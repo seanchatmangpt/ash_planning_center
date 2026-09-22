@@ -50,7 +50,12 @@ defmodule Mix.Tasks.AshPlanningCenter.ZoeProbe do
         max_pages: opts[:max_pages] || 10
       )
 
-    payload = %{contract: result.contract, receipt: result.receipt}
+    receipt =
+      result.receipt
+      |> Map.put(:producer_sha, producer_sha!())
+      |> Map.put(:contract_version, result.contract.contract_version)
+
+    payload = %{contract: result.contract, receipt: receipt}
     json = Jason.encode!(payload, pretty: true)
 
     case opts[:out] do
@@ -83,6 +88,36 @@ defmodule Mix.Tasks.AshPlanningCenter.ZoeProbe do
 
   defp maybe_source(sources, _key, nil, _fun), do: sources
   defp maybe_source(sources, key, id, fun), do: Map.put(sources, key, fun.(id))
+
+  defp producer_sha! do
+    env_sha = System.get_env("ASH_PLANNING_CENTER_PRODUCER_SHA")
+
+    cond do
+      is_binary(env_sha) and Regex.match?(~r/\A[0-9a-f]{40}\z/, env_sha) ->
+        env_sha
+
+      is_binary(env_sha) ->
+        Mix.raise("ASH_PLANNING_CENTER_PRODUCER_SHA must be an exact 40-hex SHA")
+
+      true ->
+        case System.cmd("git", ["rev-parse", "HEAD"], stderr_to_stdout: true) do
+          {sha, 0} ->
+            sha = String.trim(sha)
+
+            if Regex.match?(~r/\A[0-9a-f]{40}\z/, sha) do
+              sha
+            else
+              Mix.raise("git rev-parse HEAD did not return an exact SHA")
+            end
+
+          {output, _} ->
+            Mix.raise(
+              "producer SHA unavailable; run from a git checkout or set " <>
+                "ASH_PLANNING_CENTER_PRODUCER_SHA: #{String.trim(output)}"
+            )
+        end
+    end
+  end
 
   defp required!(opts, key) do
     case opts[key] do
