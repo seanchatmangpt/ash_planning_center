@@ -20,7 +20,9 @@ defmodule AshPlanningCenter.EventReader do
   @id_pattern ~r/\A[A-Za-z0-9_-]+\z/
 
   @spec read(map(), keyword()) :: {:ok, map()} | {:error, term()}
-  def read(attrs, opts \\ []) when is_map(attrs) do
+  def read(attrs, opts \\ [])
+
+  def read(attrs, opts) when is_map(attrs) do
     sources = value(attrs, :sources, %{})
     client = Keyword.get(opts, :client)
     max_pages = Keyword.get(opts, :max_pages, @default_max_pages)
