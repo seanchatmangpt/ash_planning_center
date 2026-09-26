@@ -1,0 +1,39 @@
+@prefix ce: <https://seanchatmangpt.github.io/chatman-equilibrium#> .
+@prefix pco: <https://seanchatmangpt.github.io/ash_planning_center/control#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+ce:Planner a rdf:Class . ce:Policy a rdf:Class . ce:Role a rdf:Class .
+ce:Agent a rdf:Class . ce:Authority a rdf:Class . ce:DO a rdf:Class .
+ce:Standing a rdf:Class . ce:Receipt a rdf:Class . ce:WorkOrder a rdf:Class .
+
+pco:HDDL a ce:Planner . pco:FOND a ce:Planner . pco:POWL a ce:Planner .
+pco:ObservationPolicy a ce:Policy ;
+  ce:authorityCeiling pco:Observe, pco:Select, pco:Construct ;
+  ce:forbids pco:PlanningCenterMutation, pco:AuthorityIncrease, pco:StandingByAssertion .
+
+pco:ControlRole a ce:Role ; ce:usesPolicy pco:ObservationPolicy .
+pco:ControlAgent a ce:Agent ; ce:playsRole pco:ControlRole .
+pco:Observe a ce:Authority . pco:Select a ce:Authority . pco:Construct a ce:Authority .
+pco:PlanningCenterMutation a ce:DO .
+pco:BRCE a ce:DO .
+pco:SelectionReceipt a ce:Receipt ; ce:consequence "none" .
+pco:ConstructionReceipt a ce:Receipt ; ce:consequence "none" .
+
+pco:ExactSubjectRequired a ce:Policy .
+pco:EpochRequired a ce:Policy .
+pco:FinitePlanRequired a ce:Policy .
+pco:LiveProviderRequired a ce:Policy .
+pco:AuthorityConservationRequired a ce:Policy .
+pco:DeterministicReplayRequired a ce:Policy .
+
+pco:ObservationPolicy ce:requires
+  pco:ExactSubjectRequired,
+  pco:EpochRequired,
+  pco:FinitePlanRequired,
+  pco:LiveProviderRequired,
+  pco:AuthorityConservationRequired,
+  pco:DeterministicReplayRequired .
+
+# Runtime invariant: this graph authorizes observation/select/construct only.
+# Consequential mutation must cross a separately admitted BRCE boundary and
+# cannot derive authority or standing from planner/provider selection.
