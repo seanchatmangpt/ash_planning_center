@@ -45,9 +45,7 @@ defmodule AshPlanningCenter.MixProject do
       {:req, "~> 0.7.4"},
       {:jason, "~> 1.4"},
       {:ggen_igniter,
-       github: "seanchatmangpt/ggen_igniter",
-       ref: @ggen_igniter_ref,
-       override: true}
+       github: "seanchatmangpt/ggen_igniter", ref: @ggen_igniter_ref, override: true}
     ]
   end
 
