@@ -90,6 +90,7 @@ defmodule Mix.Tasks.AshPlanningCenter.ZoeProbeTest do
     assert payload["contract"]["authority_boundary"] == "OBSERVE"
     assert payload["contract"]["do_authority"] == false
     assert payload["contract"]["standing"] == "PARTIAL_ALIVE"
+
     assert payload["contract"]["counts"] == %{
              "roster" => 0,
              "registrations" => 1,

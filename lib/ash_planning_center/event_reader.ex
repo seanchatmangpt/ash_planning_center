@@ -29,11 +29,15 @@ defmodule AshPlanningCenter.EventReader do
 
     with :ok <- validate_sources(sources),
          :ok <- validate_max_pages(max_pages),
+         :ok <- validate_client(client),
          {:ok, roster, service_receipts} <- read_services(sources, client, max_pages),
          {:ok, registrations, registration_receipts} <-
            read_registrations(sources, client, max_pages),
          {:ok, check_ins, check_in_receipts} <- read_check_ins(sources, client, max_pages),
          source_receipts <- service_receipts ++ registration_receipts ++ check_in_receipts,
+         roster <- Enum.sort_by(roster, & &1["slot_ref"]),
+         registrations <- Enum.sort_by(registrations, & &1["registration_ref"]),
+         check_ins <- Enum.sort_by(check_ins, & &1["check_in_ref"]),
          {:ok, snapshot} <-
            EventSnapshot.new(%{
              event_ref: value(attrs, :event_ref, nil),
@@ -66,6 +70,8 @@ defmodule AshPlanningCenter.EventReader do
            generator_scope_ref: "Mix.Tasks.AshPlanningCenter.Generate:People-only",
            source_refs: Enum.map(source_receipts, & &1.source_ref),
            pages: length(source_receipts),
+           duplicates_dropped: Enum.reduce(source_receipts, 0, &(&1.duplicates + &2)),
+           observation_digest: observation_digest(contract.observations),
            records: %{
              roster: length(roster),
              registrations: length(registrations),
@@ -81,8 +87,11 @@ defmodule AshPlanningCenter.EventReader do
   @spec read!(map(), keyword()) :: map()
   def read!(attrs, opts \\ []) do
     case read(attrs, opts) do
-      {:ok, result} -> result
-      {:error, reason} -> raise ArgumentError, "Planning Center event read refused: #{inspect(reason)}"
+      {:ok, result} ->
+        result
+
+      {:error, reason} ->
+        raise ArgumentError, "Planning Center event read refused: #{inspect(reason)}"
     end
   end
 
@@ -96,8 +105,9 @@ defmodule AshPlanningCenter.EventReader do
              {:ok, plan_id} <- provider_id(config, :plan_id),
              path <-
                "/services/v2/service_types/#{service_type_id}/plans/#{plan_id}/team_members",
-             {:ok, data, receipts} <- fetch_collection(path, client, max_pages) do
-          {:ok, Enum.map(data, &normalize_team_member/1), receipts}
+             {:ok, data, receipts} <- fetch_collection(path, client, max_pages),
+             {:ok, normalized} <- normalize_all(data, path, &normalize_team_member/1) do
+          {:ok, normalized, receipts}
         end
     end
   end
@@ -110,8 +120,9 @@ defmodule AshPlanningCenter.EventReader do
       config ->
         with {:ok, signup_id} <- provider_id(config, :signup_id),
              path <- "/registrations/v2/signups/#{signup_id}/attendees",
-             {:ok, data, receipts} <- fetch_collection(path, client, max_pages) do
-          {:ok, Enum.map(data, &normalize_attendee/1), receipts}
+             {:ok, data, receipts} <- fetch_collection(path, client, max_pages),
+             {:ok, normalized} <- normalize_all(data, path, &normalize_attendee/1) do
+          {:ok, normalized, receipts}
         end
     end
   end
@@ -124,57 +135,64 @@ defmodule AshPlanningCenter.EventReader do
       config ->
         with {:ok, event_id} <- provider_id(config, :event_id),
              path <- "/check-ins/v2/events/#{event_id}/check_ins",
-             {:ok, data, receipts} <- fetch_collection(path, client, max_pages) do
-          {:ok, Enum.map(data, &normalize_check_in/1), receipts}
+             {:ok, data, receipts} <- fetch_collection(path, client, max_pages),
+             {:ok, normalized} <- normalize_all(data, path, &normalize_check_in/1) do
+          {:ok, normalized, receipts}
         end
     end
   end
 
   defp fetch_collection(path, client, max_pages) do
-    do_fetch_collection(path, client, max_pages, 0, [], [])
+    do_fetch_collection(path, client, max_pages, 0, {[], %{}}, [])
   end
 
-  defp do_fetch_collection(_path, _client, max_pages, offset, _records, _receipts)
+  defp do_fetch_collection(_path, _client, max_pages, offset, _acc, _receipts)
        when div(offset, @per_page) >= max_pages do
     {:error, {:provider_page_bound_exceeded, max_pages}}
   end
 
-  defp do_fetch_collection(path, client, max_pages, offset, records, receipts) do
+  defp do_fetch_collection(path, client, max_pages, offset, acc, receipts) do
     params = %{"per_page" => @per_page, "offset" => offset}
     opts = [params: params] |> maybe_put_context(client)
 
     case Client.request(:get, path, opts) do
       {:ok, %Client.Response{status: status, body: %{"data" => data} = body}}
       when status in 200..299 and is_list(data) ->
-        receipt = %{
-          source_ref: "pco:" <> path <> "?offset=#{offset}&per_page=#{@per_page}",
-          status: status,
-          count: length(data)
-        }
-
-        all_records = records ++ data
-        all_receipts = receipts ++ [receipt]
         total = get_in(body, ["meta", "total_count"])
 
-        cond do
-          data == [] ->
-            {:ok, all_records, all_receipts}
+        with :ok <- validate_total(path, total),
+             {:ok, {ordered, seen} = acc, duplicates} <- admit_page(path, data, offset, acc),
+             unique = map_size(seen),
+             :ok <- validate_count(path, total, unique) do
+          receipt = %{
+            source_ref: "pco:" <> path <> "?offset=#{offset}&per_page=#{@per_page}",
+            status: status,
+            count: length(data),
+            duplicates: duplicates
+          }
 
-          is_integer(total) and length(all_records) >= total ->
-            {:ok, all_records, all_receipts}
+          all_receipts = receipts ++ [receipt]
 
-          length(data) < @per_page ->
-            {:ok, all_records, all_receipts}
+          cond do
+            data == [] ->
+              {:ok, Enum.reverse(ordered), all_receipts}
 
-          true ->
-            do_fetch_collection(
-              path,
-              client,
-              max_pages,
-              offset + @per_page,
-              all_records,
-              all_receipts
-            )
+            is_integer(total) and unique >= total ->
+              {:ok, Enum.reverse(ordered), all_receipts}
+
+            length(data) < @per_page ->
+              {:ok, Enum.reverse(ordered), all_receipts}
+
+            true ->
+              do_fetch_collection(
+                path,
+                client,
+                max_pages,
+                offset + @per_page,
+                acc,
+                all_receipts
+              )
+          end
         end
 
       {:ok, %Client.Response{status: status, body: body}} ->
@@ -185,20 +203,83 @@ defmodule AshPlanningCenter.EventReader do
     end
   end
 
+  # Admits one provider page: every resource must be a map carrying an opaque
+  # id; an identical re-delivery (offset drift under concurrent inserts) is
+  # observed once, while the same id with different content is refused because
+  # the provider no longer describes one state.
+  defp admit_page(path, data, offset, acc) do
+    data
+    |> Enum.with_index(offset)
+    |> Enum.reduce_while({:ok, acc, 0}, fn {resource, index}, {:ok, {ordered, seen}, dups} ->
+      with {:ok, id} <- admitted_resource_id(resource) do
+        case Map.fetch(seen, id) do
+          :error ->
+            {:cont, {:ok, {[resource | ordered], Map.put(seen, id, resource)}, dups}}
+
+          {:ok, ^resource} ->
+            {:cont, {:ok, {ordered, seen}, dups + 1}}
+
+          {:ok, _different} ->
+            {:halt, {:error, {:conflicting_duplicate_record, path, id}}}
+        end
+      else
+        {:error, reason} ->
+          {:halt, {:error, {:malformed_provider_record, path, index, reason}}}
+      end
+    end)
+  end
+
+  defp admitted_resource_id(%{"id" => id}) when is_binary(id) and id != "" do
+    if Regex.match?(@id_pattern, id), do: {:ok, id}, else: {:error, :unsafe_opaque_id}
+  end
+
+  defp admitted_resource_id(resource) when is_map(resource), do: {:error, :missing_opaque_id}
+  defp admitted_resource_id(_resource), do: {:error, :expected_resource_map}
+
+  defp validate_total(_path, nil), do: :ok
+  defp validate_total(_path, total) when is_integer(total) and total >= 0, do: :ok
+  defp validate_total(path, total), do: {:error, {:invalid_provider_total, path, total}}
+
+  defp validate_count(path, total, unique) when is_integer(total) and unique > total,
+    do: {:error, {:provider_count_inconsistent, path, total, unique}}
+
+  defp validate_count(_path, _total, _unique), do: :ok
+
+  defp normalize_all(data, path, fun) do
+    data
+    |> Enum.with_index()
+    |> Enum.reduce_while({:ok, []}, fn {resource, index}, {:ok, acc} ->
+      case fun.(resource) do
+        {:ok, normalized} ->
+          {:cont, {:ok, [normalized | acc]}}
+
+        {:error, reason} ->
+          {:halt, {:error, {:malformed_provider_record, path, index, reason}}}
+      end
+    end)
+    |> case do
+      {:ok, acc} -> {:ok, Enum.reverse(acc)}
+      error -> error
+    end
+  end
+
   defp normalize_team_member(resource) do
-    id = resource_id(resource)
+    id = resource["id"]
     attrs = attributes(resource)
 
-    %{
-      "slot_ref" => "plan-person:" <> id,
-      "person_ref" => opaque_person_ref(resource, "plan-person", id),
-      "role" => non_blank(attrs["team_position_name"]) || "team-member",
-      "status" => non_blank(attrs["status"]) || "unknown"
-    }
+    with {:ok, person_ref} <- opaque_person_ref(resource, "plan-person", id) do
+      {:ok,
+       %{
+         "slot_ref" => "plan-person:" <> id,
+         "person_ref" => person_ref,
+         "role" => non_blank(attrs["team_position_name"]) || "team-member",
+         "status" => non_blank(attrs["status"]) || "unknown"
+       }}
+    end
   end
 
   defp normalize_attendee(resource) do
-    id = resource_id(resource)
+    id = resource["id"]
     attrs = attributes(resource)
 
     status =
@@ -209,38 +290,57 @@ defmodule AshPlanningCenter.EventReader do
         true -> "unknown"
       end
 
-    %{
-      "registration_ref" => "attendee:" <> id,
-      "person_ref" => opaque_person_ref(resource, "registration-attendee", id),
-      "status" => status
-    }
+    with {:ok, person_ref} <- opaque_person_ref(resource, "registration-attendee", id) do
+      {:ok,
+       %{
+         "registration_ref" => "attendee:" <> id,
+         "person_ref" => person_ref,
+         "status" => status
+       }}
+    end
   end
 
   defp normalize_check_in(resource) do
-    id = resource_id(resource)
+    id = resource["id"]
     attrs = attributes(resource)
 
-    %{
-      "check_in_ref" => "check-in:" <> id,
-      "person_ref" => opaque_person_ref(resource, "check-in", id),
-      "occurred_at" => non_blank(attrs["confirmed_at"]) || non_blank(attrs["created_at"]),
-      "status" => if(non_blank(attrs["checked_out_at"]), do: "checked_out", else: "present")
-    }
-    |> drop_nil("occurred_at")
+    with {:ok, person_ref} <- opaque_person_ref(resource, "check-in", id) do
+      {:ok,
+       %{
+         "check_in_ref" => "check-in:" <> id,
+         "person_ref" => person_ref,
+         "occurred_at" => non_blank(attrs["confirmed_at"]) || non_blank(attrs["created_at"]),
+         "status" => if(non_blank(attrs["checked_out_at"]), do: "checked_out", else: "present")
+       }
+       |> drop_nil("occurred_at")}
+    end
   end
 
   defp opaque_person_ref(resource, fallback_kind, fallback_id) do
     case get_in(resource, ["relationships", "person", "data", "id"]) do
-      id when is_binary(id) and id != "" -> "person:" <> id
-      _ -> "#{fallback_kind}:#{fallback_id}"
-    end
-  end
+      id when is_binary(id) and id != "" ->
+        if Regex.match?(@id_pattern, id),
+          do: {:ok, "person:" <> id},
+          else: {:error, :unsafe_person_id}
 
-  defp resource_id(%{"id" => id}) when is_binary(id) and id != "", do: id
-  defp resource_id(_), do: raise(ArgumentError, "provider resource missing opaque id")
+      _ ->
+        {:ok, "#{fallback_kind}:#{fallback_id}"}
+    end
+  rescue
+    # get_in/2 over a non-map relationship payload (e.g. a list) is a
+    # malformed provider shape, not a crash.
+    _ in [FunctionClauseError, ArgumentError, BadMapError] ->
+      {:error, :malformed_person_relationship}
+  end
 
   defp attributes(%{"attributes" => attrs}) when is_map(attrs), do: attrs
   defp attributes(_), do: %{}
+
+  defp observation_digest(observations) do
+    "sha256:" <>
+      (:crypto.hash(:sha256, :erlang.term_to_binary(observations, [:deterministic]))
+       |> Base.encode16(case: :lower))
+  end
 
   defp source(sources, key) when is_map(sources),
     do: Map.get(sources, key, Map.get(sources, Atom.to_string(key)))
@@ -248,14 +348,39 @@ defmodule AshPlanningCenter.EventReader do
   defp source(_sources, _key), do: nil
 
   defp validate_sources(sources) when is_map(sources) do
-    if Enum.any?([:services, :registrations, :check_ins], &is_map(source(sources, &1))) do
-      :ok
-    else
-      {:error, :no_admitted_provider_sources}
+    keys = [:services, :registrations, :check_ins]
+
+    case Enum.find(keys, fun_invalid_source(sources)) do
+      nil ->
+        if Enum.any?(keys, &is_map(source(sources, &1))) do
+          :ok
+        else
+          {:error, :no_admitted_provider_sources}
+        end
+
+      key ->
+        {:error, {:invalid_provider_source, key}}
     end
   end
 
   defp validate_sources(_), do: {:error, :invalid_provider_sources}
+
+  defp fun_invalid_source(sources) do
+    fn key ->
+      config = source(sources, key)
+      not (is_nil(config) or is_map(config))
+    end
+  end
+
+  defp validate_client(nil), do: :ok
+
+  defp validate_client(client) when is_atom(client) do
+    if Code.ensure_loaded?(client) and function_exported?(client, :request, 3),
+      do: :ok,
+      else: {:error, {:invalid_client, client}}
+  end
+
+  defp validate_client(client), do: {:error, {:invalid_client, client}}
 
   defp validate_max_pages(value) when is_integer(value) and value in 1..100, do: :ok
   defp validate_max_pages(value), do: {:error, {:invalid_max_pages, value}}

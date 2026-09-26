@@ -157,6 +157,19 @@ drops provider PII, and emits only opaque participant references and operational
 status through `AshPlanningCenter.EventSnapshot`.
 
 A successful read returns an OBSERVE-only receipt with `do_authority: false`.
+
+Provider pages are admitted, not trusted: a record that is not a map, lacks an
+opaque id, or carries an id (or person relationship id) outside
+`[A-Za-z0-9_-]` is a typed `malformed_provider_record` refusal; an identical
+re-delivery across pages is observed once (`duplicates_dropped` in the
+receipt) while the same id with different content is refused as
+`conflicting_duplicate_record`; a negative/non-integer `total_count`, or one
+below the records already delivered, is refused instead of silently
+truncating. Observations are ordered by their opaque ref and the receipt
+carries `observation_digest` (sha256 over the deterministic term encoding), so
+provider reordering replays to the same digest and any changed record does not.
+`mix run bench/event_reader_bench.exs` records timing; the regression ceiling
+lives in `test/ash_planning_center/event_reader_bench_test.exs`.
 Repository tests use an injected client and therefore prove `PARTIAL_ALIVE`
 transport semantics, not a live ZOE Planning Center observation.
 

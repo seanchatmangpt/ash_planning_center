@@ -1,0 +1,41 @@
+{
+  "otp_release": "28",
+  "elixir": "1.19.5",
+  "module_md5": "3342e80dcfe30d633067d5316d6a40bd",
+  "schema": "ash_planning_center/event-reader-bench/1",
+  "authority": "NONE",
+  "results": [
+    {
+      "records_per_source": 100,
+      "iterations": 50,
+      "pages": 3,
+      "total_records": 300,
+      "median_us": 1356,
+      "min_us": 1240,
+      "max_us": 3868,
+      "observation_digest": "sha256:03127e14408f371d3747759c606d4264fb3ff46e31eb22b012c5cc37010b3154"
+    },
+    {
+      "records_per_source": 1000,
+      "iterations": 30,
+      "pages": 30,
+      "total_records": 3000,
+      "median_us": 16015,
+      "min_us": 12331,
+      "max_us": 22941,
+      "observation_digest": "sha256:de7637ea39102d4ef35a8120bcfdb89fbcaa81980cd2bc54e1d3d5eaeca63ca1"
+    },
+    {
+      "records_per_source": 10000,
+      "iterations": 10,
+      "pages": 300,
+      "total_records": 30000,
+      "median_us": 186373,
+      "min_us": 169789,
+      "max_us": 432844,
+      "observation_digest": "sha256:1bc2b1cae0a407b67e4cfd9c9cbb34f26bf09c654e248b29f24461e869b4f0ae"
+    }
+  ],
+  "subject": "AshPlanningCenter.EventReader",
+  "scaling_ratio_100x": 137.44
+}

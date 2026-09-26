@@ -52,8 +52,7 @@ defmodule AshPlanningCenter.EventSnapshotTest do
   end
 
   test "refuses participant PII instead of silently projecting it" do
-    assert {:error,
-            {:unsupported_participant_fields, :registrations, 0, ["first_name"]}} =
+    assert {:error, {:unsupported_participant_fields, :registrations, 0, ["first_name"]}} =
              EventSnapshot.new(%{
                event_ref: "event:youth-001",
                event_name: "Youth Night",

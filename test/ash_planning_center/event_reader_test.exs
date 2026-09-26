@@ -132,6 +132,7 @@ defmodule AshPlanningCenter.EventReaderTest do
     assert result.receipt.transport_identity == inspect(FakeClient)
     assert result.receipt.implementation_origin == "HANDWRITTEN_IRREDUCIBLE_COMPOSITION"
     assert result.receipt.generator_capability == "UNSUPPORTED_NON_PEOPLE_PRODUCTS"
+
     assert result.receipt.generator_scope_ref ==
              "Mix.Tasks.AshPlanningCenter.Generate:People-only"
 
