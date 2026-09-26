@@ -1,7 +1,7 @@
 defmodule AshPlanningCenter.MixProject do
   use Mix.Project
 
-  @version "26.9.10"
+  @version "26.9.21"
   @source_url "https://github.com/seanchatmangpt/ash_planning_center"
 
   def project do
@@ -20,7 +20,7 @@ defmodule AshPlanningCenter.MixProject do
   end
 
   def application do
-    [extra_applications: [:logger]]
+    [extra_applications: [:logger, :crypto]]
   end
 
   defp aliases do
