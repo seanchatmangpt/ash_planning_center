@@ -1,0 +1,16 @@
+PREFIX pcui: <https://seanchatmangpt.github.io/ash_planning_center/ui/ontology#>
+
+SELECT ?contract ?module_name ?file_stem ?spec_version ?surface_runtime ?observer
+       ?planner_boundary ?planning_formalism ?authority_boundary
+WHERE {
+  ?contract a pcui:SurfaceContract ;
+    pcui:moduleName ?module_name ;
+    pcui:fileStem ?file_stem ;
+    pcui:specVersion ?spec_version ;
+    pcui:surfaceRuntime ?surface_runtime ;
+    pcui:observer ?observer ;
+    pcui:plannerBoundary ?planner_boundary ;
+    pcui:planningFormalism ?planning_formalism ;
+    pcui:authorityBoundary ?authority_boundary .
+}
+ORDER BY ?file_stem

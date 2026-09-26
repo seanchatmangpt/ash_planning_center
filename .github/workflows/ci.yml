@@ -18,6 +18,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Admit exact subject
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
 
       - uses: erlef/setup-beam@v1
         with:
@@ -27,11 +34,36 @@ jobs:
       - name: Resolve dependencies
         run: mix deps.get
 
+      - name: Manufacture Planning Center accessibility surface from ontology
+        run: mix ash_planning_center.generate_surface
+
+      - name: Preserve generated surface candidate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: planning-center-surface-candidate
+          path: lib/ash_planning_center/generated/surface/contract.ex
+          if-no-files-found: error
+
+      - name: Verify generated surface projection is tracked and current
+        run: |
+          git ls-files --error-unmatch lib/ash_planning_center/generated/surface/contract.ex
+          git diff --exit-code -- lib/ash_planning_center/generated/surface/contract.ex
+
+      - name: Verify deterministic surface regeneration
+        run: |
+          sha256sum lib/ash_planning_center/generated/surface/contract.ex > /tmp/surface-contract.sha256
+          mix ash_planning_center.generate_surface
+          sha256sum -c /tmp/surface-contract.sha256
+          git diff --exit-code -- lib/ash_planning_center/generated/surface/contract.ex
+
       - name: Project pinned Planning Center OpenAPI with ggen_igniter
         run: mix ash_planning_center.generate
 
-      - name: Verify generated Ash projection is committed
-        run: git diff --exit-code -- lib/ash_planning_center/generated/people/person.ex
+      - name: Verify generated Ash resource projection is tracked and current
+        run: |
+          git ls-files --error-unmatch lib/ash_planning_center/generated/people/person.ex
+          git diff --exit-code -- lib/ash_planning_center/generated/people/person.ex
 
       - name: Check formatting
         run: mix format --check-formatted
@@ -41,6 +73,9 @@ jobs:
 
       - name: Test
         run: mix test
+
+      - name: Construct package
+        run: mix hex.build
 
       - name: Preserve ggen_igniter reconciliation evidence
         if: always()

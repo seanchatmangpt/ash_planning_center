@@ -1,0 +1,23 @@
+PREFIX pcui: <https://seanchatmangpt.github.io/ash_planning_center/ui/ontology#>
+
+SELECT ?entry ?kind ?framework ?role ?authority_boundary ?reason
+WHERE {
+  {
+    ?entry a pcui:FrameworkBinding ;
+      pcui:framework ?framework ;
+      pcui:role ?role ;
+      pcui:authorityBoundary ?authority_boundary .
+    BIND("binding" AS ?kind)
+    BIND("" AS ?reason)
+  }
+  UNION
+  {
+    ?entry a pcui:FrameworkExclusion ;
+      pcui:framework ?framework ;
+      pcui:reason ?reason .
+    BIND("exclusion" AS ?kind)
+    BIND("" AS ?role)
+    BIND("" AS ?authority_boundary)
+  }
+}
+ORDER BY ?kind ?framework
