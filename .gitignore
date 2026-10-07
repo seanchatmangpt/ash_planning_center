@@ -6,3 +6,10 @@
 erl_crash.dump
 *.ez
 ash_planning_center-*.tar
+
+# lane-lease build roots (fan-out campaign)
+target/
+node_modules/
+.DS_Store
+_build-lane*/
+target-lane*/
